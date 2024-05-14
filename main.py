@@ -5,6 +5,7 @@ import datetime
 import plotly.express as px
 
 st.set_page_config(layout="wide")
+st.title('Interactive FIP convergence matrix')
 df = pd.read_csv('new_matrix.csv')
 
 available_fers = df[df['resourcetype'] == 'https://w3id.org/fair/fip/terms/Available-FAIR-Enabling-Resource']
