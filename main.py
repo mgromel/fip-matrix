@@ -35,7 +35,6 @@ max_end = datetime.datetime.strptime(max(mapped_df['enddate']), '%Y-%m-%d').date
 
 princ = np.unique(mapped_df['q'])
 comm = np.unique(mapped_df['c'])
-print(princ[0:5])
 st.header("Select time period for the FIP matrix")
 
 col1, col2 = st.columns(2)
