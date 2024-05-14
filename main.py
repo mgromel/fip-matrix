@@ -27,8 +27,6 @@ tbd_fers['mapped_values'] = tbd_fers['rel'].map(tbd_fers_mappings)
 
 mapped_df = pd.concat([available_fers, tbd_fers])
 
-#st.dataframe(mapped_df)
-
 min_start = datetime.datetime.strptime(min(mapped_df['startdate']), '%Y-%m-%d').date()
 max_start = datetime.datetime.strptime(max(mapped_df['startdate']), '%Y-%m-%d').date()
 min_end = datetime.datetime.strptime(min(mapped_df['enddate']), '%Y-%m-%d').date()
@@ -71,9 +69,7 @@ st.dataframe(pivot_styled,
                     help='Links to nanopublications of each FER',
                     display_text='🔗'
                 )
-             }
-             
-             )
+             })
 
 
 dat = [0,1,2,3]
