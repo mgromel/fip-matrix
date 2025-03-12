@@ -28,10 +28,10 @@ tbd_fers['mapped_values'] = tbd_fers['rel'].map(tbd_fers_mappings)
 
 mapped_df = pd.concat([available_fers, tbd_fers])
 
-min_start = datetime.datetime.strptime(min(mapped_df['startdate']), '%Y-%m-%d').date()
-max_start = datetime.datetime.strptime(max(mapped_df['startdate']), '%Y-%m-%d').date()
-min_end = datetime.datetime.strptime(min(mapped_df['enddate']), '%Y-%m-%d').date()
-max_end = datetime.datetime.strptime(max(mapped_df['enddate']), '%Y-%m-%d').date()
+min_start = datetime.datetime.strptime(min(mapped_df['startdate'].dropna(axis=0)), '%Y-%m-%d').date()
+max_start = datetime.datetime.strptime(max(mapped_df['startdate'].dropna(axis=0)), '%Y-%m-%d').date()
+min_end = datetime.datetime.strptime(min(mapped_df['enddate'].dropna(axis=0)), '%Y-%m-%d').date()
+max_end = datetime.datetime.strptime(max(mapped_df['enddate'].dropna(axis=0)), '%Y-%m-%d').date()
 
 princ = np.unique(mapped_df['q'])
 comm = np.unique(mapped_df['c'])
