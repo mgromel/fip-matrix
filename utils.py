@@ -3,7 +3,7 @@ from datetime import datetime
 import streamlit as st
 from config import AVAILABLE_MAP, TBD_MAP
 
-@st.cache_data(persist='disk')
+@st.cache_data
 def load_and_prepare_data(path):
     df = pd.read_csv(path)
     df['mapped_values'] = df.apply(map_relation_value, axis=1)
