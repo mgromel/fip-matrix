@@ -4,7 +4,9 @@ import numpy as np
 import datetime
 import plotly.express as px
 
-st.set_page_config(layout="wide")
+st.set_page_config(layout="wide",
+                   page_title='FIP Matrix',
+                   page_icon='🔍')
 st.title('Interactive FIP convergence matrix')
 df = pd.read_csv('./new_matrix.csv')
 
