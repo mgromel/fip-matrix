@@ -6,7 +6,7 @@ import plotly.express as px
 
 st.set_page_config(layout="wide")
 st.title('Interactive FIP convergence matrix')
-df = pd.read_csv('new_matrix.csv')
+df = pd.read_csv('./new_matrix.csv')
 
 available_fers = df[df['resourcetype'] == 'https://w3id.org/fair/fip/terms/Available-FAIR-Enabling-Resource']
 tbd_fers = df[df['resourcetype'] == 'https://w3id.org/fair/fip/terms/FAIR-Enabling-Resource-to-be-Developed']
@@ -28,10 +28,20 @@ tbd_fers['mapped_values'] = tbd_fers['rel'].map(tbd_fers_mappings)
 
 mapped_df = pd.concat([available_fers, tbd_fers])
 
+
 min_start = datetime.datetime.strptime(min(mapped_df['startdate'].dropna(axis=0)), '%Y-%m-%d').date()
 max_start = datetime.datetime.strptime(max(mapped_df['startdate'].dropna(axis=0)), '%Y-%m-%d').date()
 min_end = datetime.datetime.strptime(min(mapped_df['enddate'].dropna(axis=0)), '%Y-%m-%d').date()
 max_end = datetime.datetime.strptime(max(mapped_df['enddate'].dropna(axis=0)), '%Y-%m-%d').date()
+
+# fill empty dates if start date is na: fill with min_start, if enddate is na: fill with max_end
+mapped_df['startdate'].fillna(min_start, inplace=True)
+mapped_df['enddate'].fillna(max_end, inplace=True)
+
+#there was a mess with date type, code below fixes it with pd.to_datetime conversion
+mapped_df['startdate'] = pd.to_datetime(mapped_df['startdate']).dt.date
+mapped_df['enddate'] = pd.to_datetime(mapped_df['enddate']).dt.date
+#####
 
 princ = np.unique(mapped_df['q'])
 comm = np.unique(mapped_df['c'])
@@ -46,7 +56,9 @@ with col2:
     end = st.date_input('End date', value=max_end, min_value=min_end, max_value=max_end)
     communities = st.multiselect('Communities:', options=comm)
 
-filtered_df = mapped_df[(mapped_df['startdate'] >= str(star)) & (mapped_df['enddate'] <= str(end))]
+filtered_df = mapped_df[(mapped_df['startdate'] >= star) & (mapped_df['enddate'] <= end)]
+
+
 if len(communities) > 0 and len(fip_questions) > 0:
     filtered_df = filtered_df.query('q in @fip_questions and c in @communities')
 elif len(communities) > 0 and len(fip_questions) == 0:
