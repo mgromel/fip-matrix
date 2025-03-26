@@ -1,0 +1,26 @@
+name: Sync FIP Matrix CSV
+
+on:
+  schedule:
+    - cron: '0 * * * *'    # 
+  workflow_dispatch:       # 
+
+jobs:
+  fetch-csv:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout this repository
+        uses: actions/checkout@v3
+
+      - name: Download latest matrix CSV
+        run: |
+          curl -L -o data/new_matrix.csv https://raw.githubusercontent.com/peta-pico/dsw-nanopub-api/main/tables/new_matrix.csv
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add data/new_matrix.csv
+          git diff --cached --quiet || git commit -m "Update new_matrix.csv from upstream"
+          git push
