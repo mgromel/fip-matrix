@@ -15,7 +15,7 @@ jobs:
 
       - name: Download latest matrix CSV
         run: |
-          curl -L -o data/new_matrix.csv https://raw.githubusercontent.com/peta-pico/dsw-nanopub-api/main/tables/new_matrix.csv
+          curl -L -o data/new_matrix.csv https://raw.githubusercontent.com/peta-pico/dsw-nanopub-api/main/tables/matrix.csv
 
       - name: Commit and push if changed
         env:
