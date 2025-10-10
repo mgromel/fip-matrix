@@ -4,7 +4,7 @@ from config import COLOR_MAP
 from utils import load_and_prepare_data, filter_data
 
 st.set_page_config(layout="wide", page_title='FIP Matrix', page_icon='🔍')
-st.title('Interactive FIP convergence matrix')
+st.title('Interactive FIP Matrix')
 
 # --- Load data
 df = load_and_prepare_data('./data/new_matrix.csv')
