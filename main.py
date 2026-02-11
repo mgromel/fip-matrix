@@ -65,7 +65,7 @@ assets = Path(__file__).parent / "assets"
 
 logos = [
     img_to_base64(assets / "parc_logo.png"),
-    img_to_base64(assets / "gff_logo.png"),
+    img_to_base64(assets / "GFF_logo.png"),
     # img_to_base64(assets / "xxx.png"),
 ]
 
