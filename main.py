@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 from config import COLOR_MAP
 from utils import load_and_prepare_data, filter_data
+import base64
+from pathlib import Path
 
 st.set_page_config(layout="wide", page_title='FIP Matrix', page_icon='🔍')
 st.title('Interactive FIP Matrix')
@@ -52,3 +54,46 @@ legend = pd.DataFrame([0, 1, 2, 3], index=[
 legend.index.name='FAIR Supporting Resource status'
 
 st.dataframe(legend.style.map(style_fip_matrix), use_container_width=False)
+
+
+# --- Footer
+def img_to_base64(img_path):
+    with open(img_path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
+
+assets = Path(__file__).parent / "assets"
+
+logos = [
+    img_to_base64(assets / "parc_logo.png"),
+    img_to_base64(assets / "gff_logo.png"),
+    # img_to_base64(assets / "xxx.png"),
+]
+
+st.markdown(
+    f"""
+    <style>
+    .footer {{
+        position: fixed;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        background-color: rgb(14, 17, 23);
+        border-top: 1px solid #212121;
+        padding: 10px 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 40px;
+        z-index: 100;
+    }}
+    .footer img {{
+        height: 45px;
+    }}
+    </style>
+
+    <div class="footer">
+        {''.join([f'<img src="data:image/png;base64,{logo}"/>' for logo in logos])}
+    </div>
+    """,
+    unsafe_allow_html=True
+)
