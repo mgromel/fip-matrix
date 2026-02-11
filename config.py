@@ -11,7 +11,7 @@ TBD_MAP = {
 }
 
 COLOR_MAP = {
-    0: '#fcebe6',
+    0: "#dadada4a",
     1: 'lightblue',
     2: '#e5fa98',
     3: '#8de879'
