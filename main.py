@@ -69,7 +69,7 @@ logos = [
     # img_to_base64(assets / "xxx.png"),
 ]
 
-FOOTER_HEIGHT = 45  
+FOOTER_HEIGHT = 55  
 
 st.markdown(
     f"""
