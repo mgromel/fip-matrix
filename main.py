@@ -134,8 +134,20 @@ st.markdown(
 
     <script>
     (function () {{
-      const doc = window.parent.document;
+      // Get the correct document context
+      let doc = document;
+      let targetWindow = window;
       
+      // If we're in an iframe, target the parent
+      if (window.parent !== window) {{
+        try {{
+          doc = window.parent.document;
+          targetWindow = window.parent;
+        }} catch (e) {{
+          console.log("Cannot access parent, using current document");
+        }}
+      }}
+
       function initFooter() {{
         const footer = doc.getElementById("app-footer");
         if (!footer) {{
@@ -163,7 +175,7 @@ st.markdown(
             doc.querySelector('.stApp') ||
             doc.body;
 
-          const colorStr = window.getComputedStyle(el).color;
+          const colorStr = targetWindow.getComputedStyle(el).color;
           console.log("Text color:", colorStr);
           const rgb = parseRGB(colorStr) || [0,0,0];
           const lum = luminance(rgb);
@@ -174,7 +186,7 @@ st.markdown(
 
         function pickTheme() {{
           try {{
-            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {{
+            if (targetWindow.matchMedia && targetWindow.matchMedia('(prefers-color-scheme: dark)').matches) {{
               console.log("System prefers dark");
               return "dark";
             }}
@@ -197,12 +209,12 @@ st.markdown(
         obs.observe(doc.body, {{ attributes: true, childList: true, subtree: true }});
 
         try {{
-          const mq = window.matchMedia('(prefers-color-scheme: dark)');
+          const mq = targetWindow.matchMedia('(prefers-color-scheme: dark)');
           if (mq && mq.addEventListener) mq.addEventListener('change', applyTheme);
           else if (mq && mq.addListener) mq.addListener(applyTheme);
         }} catch (e) {{}}
 
-        window.addEventListener("resize", applyTheme);
+        targetWindow.addEventListener("resize", applyTheme);
         
         return true;
       }}
@@ -213,6 +225,9 @@ st.markdown(
       const retryInterval = setInterval(() => {{
         if (initFooter() || retries++ > maxRetries) {{
           clearInterval(retryInterval);
+          if (retries > maxRetries) {{
+            console.log("Footer initialization failed after max retries");
+          }}
         }}
       }}, 100);
     }})();
