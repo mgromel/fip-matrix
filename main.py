@@ -75,54 +75,56 @@ st.markdown(
     f"""
     <style>
       :root {{
-        --footer-h: {FOOTER_HEIGHT}px;
+        --footer-h: 70px;
       }}
 
-      /* Zrób miejsce na fixed footer (najważniejsze!) */
+      /* Zrób miejsce na fixed footer */
       section[data-testid="stMain"] .block-container {{
         padding-bottom: calc(var(--footer-h) + 24px) !important;
       }}
 
       #app-footer {{
         position: fixed;
-        left: 0; right: 0; bottom: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
         height: var(--footer-h);
         display: flex;
         justify-content: center;
         align-items: center;
         gap: 40px;
         z-index: 10000;
-        background: rgba(0,0,0,0); /* zostanie nadpisane klasą light/dark */
-        pointer-events: none; /* żeby footer nie blokował scroll/klików pod spodem */
+        background: #ffffff !important; /* nadpisywane klasą */
       }}
 
       #app-footer img {{
         height: 45px;
         object-fit: contain;
-        pointer-events: auto; /* jakbyś chciał linkować loga */
       }}
 
-      /* Border jako overlay – pewniejsze niż border-top */
+      /* Border jako overlay (pewniejszy niż border-top) */
       #app-footer::before {{
         content: "";
         position: absolute;
-        top: 0; left: 0; right: 0;
+        top: 0;
+        left: 0;
+        right: 0;
         height: 1px;
-        background: transparent;
+        background: #e0e0e0;
       }}
 
       #app-footer.light {{
         background: #f9f9f9 !important;
       }}
       #app-footer.light::before {{
-        background: #e0e0e0 !important;
+        background: #e0e0e0;
       }}
 
       #app-footer.dark {{
         background: #0e1117 !important;
       }}
       #app-footer.dark::before {{
-        background: #30363d !important;
+        background: #30363d;
       }}
     </style>
 
@@ -131,39 +133,67 @@ st.markdown(
     </div>
 
     <script>
-      (function() {{
-        const doc = window.parent.document;
-        const footer = doc.getElementById("app-footer");
-        if (!footer) return;
+    (function () {{
+      const doc = window.parent.document;
+      const footer = doc.getElementById("app-footer");
+      if (!footer) return;
 
-        function getLuminance(rgbStr) {{
-          const m = rgbStr.match(/\\d+/g);
-          if (!m || m.length < 3) return 255;
-          const r = parseInt(m[0]), g = parseInt(m[1]), b = parseInt(m[2]);
-          return 0.2126*r + 0.7152*g + 0.0722*b;
+      function parseRGB(str) {{
+        const m = str.match(/\\d+(\\.\\d+)?/g);
+        if (!m || m.length < 3) return null;
+        return [Number(m[0]), Number(m[1]), Number(m[2])];
+      }}
+
+      function luminance(rgb) {{
+        const [r, g, b] = rgb;
+        return 0.2126*r + 0.7152*g + 0.0722*b;
+      }}
+
+      function isTransparent(bg) {{
+        return !bg ||
+               bg === "transparent" ||
+               bg.startsWith("rgba(0, 0, 0, 0") ||
+               bg.startsWith("rgba(0,0,0,0");
+      }}
+
+      function findSolidBackground(startEl) {{
+        let el = startEl;
+        while (el && el !== doc.documentElement) {{
+          const bg = window.getComputedStyle(el).backgroundColor;
+          if (!isTransparent(bg)) return bg;
+          el = el.parentElement;
+        }}
+        return window.getComputedStyle(doc.body).backgroundColor || "rgb(255,255,255)";
+      }}
+
+      function setThemeClass() {{
+        const candidates = [
+          doc.querySelector('[data-testid="stAppViewContainer"]'),
+          doc.querySelector('.stApp'),
+          doc.querySelector('section[data-testid="stMain"]'),
+          doc.body
+        ].filter(Boolean);
+
+        let bg = null;
+        for (const c of candidates) {{
+          bg = findSolidBackground(c);
+          if (bg && !isTransparent(bg)) break;
         }}
 
-        function setThemeClass() {{
-          // Streamlit czasem ustawia tło na wrapperach, nie na body
-          const main = doc.querySelector('section[data-testid="stMain"]');
-          const target = main || doc.body;
+        const rgb = parseRGB(bg) || [255,255,255];
+        const lum = luminance(rgb);
 
-          const bg = window.getComputedStyle(target).backgroundColor;
-          const lum = getLuminance(bg);
+        footer.classList.remove("light","dark");
+        footer.classList.add(lum > 128 ? "light" : "dark");
+      }}
 
-          footer.classList.remove("light","dark");
-          footer.classList.add(lum > 128 ? "light" : "dark");
-        }}
+      setThemeClass();
 
-        setThemeClass();
-
-        // Obserwuj zmiany atrybutów i stylów (przełączenia motywu, rerender)
-        const obs = new MutationObserver(() => setThemeClass());
-        obs.observe(doc.documentElement, {{ attributes: true, childList: true, subtree: true }});
-        obs.observe(doc.body, {{ attributes: true, childList: true, subtree: true }});
-
-        window.addEventListener("resize", setThemeClass);
-      }})();
+      const obs = new MutationObserver(setThemeClass);
+      obs.observe(doc.documentElement, {{ attributes: true, childList: true, subtree: true }});
+      obs.observe(doc.body, {{ attributes: true, childList: true, subtree: true }});
+      window.addEventListener("resize", setThemeClass);
+    }})();
     </script>
     """,
     unsafe_allow_html=True
