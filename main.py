@@ -89,6 +89,22 @@ st.markdown(
     .footer img {{
         height: 45px;
     }}
+
+    /* LIGHT */
+    @media (prefers-color-scheme: light) {{
+      .footer {{
+        background: rgb(255, 255, 255);
+        border-top: 1px solid #212121;
+      }}
+    }}
+
+    /* DARK */
+    @media (prefers-color-scheme: dark) {{
+      .footer {{
+        background-color: rgb(14, 17, 23);
+        border-top: 1px solid #212121;
+      }}
+    }}
     </style>
 
     <div class="footer">
