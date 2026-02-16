@@ -149,50 +149,55 @@ st.markdown(
         return 0.2126*r + 0.7152*g + 0.0722*b;
       }}
 
-      function isTransparent(bg) {{
-        return !bg ||
-               bg === "transparent" ||
-               bg.startsWith("rgba(0, 0, 0, 0") ||
-               bg.startsWith("rgba(0,0,0,0");
-      }}
+      function pickThemeByTextColor() {{
+        // Najczęściej tekst w dark mode jest jasny -> wysoka luminancja
+        const el =
+          doc.querySelector('section[data-testid="stMain"]') ||
+          doc.querySelector('[data-testid="stAppViewContainer"]') ||
+          doc.querySelector('.stApp') ||
+          doc.body;
 
-      function findSolidBackground(startEl) {{
-        let el = startEl;
-        while (el && el !== doc.documentElement) {{
-          const bg = window.getComputedStyle(el).backgroundColor;
-          if (!isTransparent(bg)) return bg;
-          el = el.parentElement;
-        }}
-        return window.getComputedStyle(doc.body).backgroundColor || "rgb(255,255,255)";
-      }}
-
-      function setThemeClass() {{
-        const candidates = [
-          doc.querySelector('[data-testid="stAppViewContainer"]'),
-          doc.querySelector('.stApp'),
-          doc.querySelector('section[data-testid="stMain"]'),
-          doc.body
-        ].filter(Boolean);
-
-        let bg = null;
-        for (const c of candidates) {{
-          bg = findSolidBackground(c);
-          if (bg && !isTransparent(bg)) break;
-        }}
-
-        const rgb = parseRGB(bg) || [255,255,255];
+        const colorStr = window.getComputedStyle(el).color;
+        const rgb = parseRGB(colorStr) || [0,0,0];
         const lum = luminance(rgb);
 
-        footer.classList.remove("light","dark");
-        footer.classList.add(lum > 128 ? "light" : "dark");
+        // jasny tekst => dark theme
+        return lum > 128 ? "dark" : "light";
       }}
 
-      setThemeClass();
+      function pickTheme() {{
+        // 1) Fallback po preferencjach systemu (często zgodne z Streamlit)
+        try {{
+          if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {{
+            return "dark";
+          }}
+        }} catch (e) {{}}
 
-      const obs = new MutationObserver(setThemeClass);
+        // 2) Pewniejsze: po kolorze tekstu w głównym kontenerze
+        return pickThemeByTextColor();
+      }}
+
+      function applyTheme() {{
+        const theme = pickTheme();
+        footer.classList.remove("light","dark");
+        footer.classList.add(theme);
+      }}
+
+      applyTheme();
+
+      // Reaguj na przełączenia motywu / rerender Streamlit
+      const obs = new MutationObserver(applyTheme);
       obs.observe(doc.documentElement, {{ attributes: true, childList: true, subtree: true }});
       obs.observe(doc.body, {{ attributes: true, childList: true, subtree: true }});
-      window.addEventListener("resize", setThemeClass);
+
+      // Reaguj na zmianę preferencji systemowej
+      try {{
+        const mq = window.matchMedia('(prefers-color-scheme: dark)');
+        if (mq && mq.addEventListener) mq.addEventListener('change', applyTheme);
+        else if (mq && mq.addListener) mq.addListener(applyTheme);
+      }} catch (e) {{}}
+
+      window.addEventListener("resize", applyTheme);
     }})();
     </script>
     """,
