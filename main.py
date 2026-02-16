@@ -74,20 +74,20 @@ st.markdown(
     <style>
     .footer {{
         position: fixed;
-        left: 0;
-        bottom: 0;
+        left: 0; bottom: 0;
         width: 100%;
-        background-color: rgb(14, 17, 23);
-        border-top: 1px solid #212121;
         padding: 10px 0;
         display: flex;
         justify-content: center;
         align-items: center;
         gap: 40px;
         z-index: 100;
+        border-top: 1px solid;
+        transition: background 150ms ease, border-color 150ms ease;
     }}
     .footer img {{
         height: 45px;
+        object-fit: contain;
     }}
 
     .footer.light {{
@@ -100,32 +100,36 @@ st.markdown(
     }}
     </style>
 
+    <div class="footer" id="app-footer">
+        {''.join([f'<img src="data:image/png;base64,{l}"/>' for l in logos])}
+    </div>
+
     <script>
-        (function() {{
-            const footer = window.parent.document.getElementById("app-footer");
-            if (!footer) return;
+    (function() {{
+        const footer = window.parent.document.getElementById("app-footer");
+        if (!footer) return;
 
-            function setThemeClass() {{
-                const body = window.parent.document.body;
-                const bg = window.parent.getComputedStyle(body).backgroundColor;
+        function setThemeClass() {{
+            const body = window.parent.document.body;
+            const bg = window.parent.getComputedStyle(body).backgroundColor;
 
-                // bg w formacie "rgb(r, g, b)" – liczymy jasność
-                const m = bg.match(/\\d+/g);
-                if (!m || m.length < 3) return;
-                const r = parseInt(m[0]), g = parseInt(m[1]), b = parseInt(m[2]);
-                const luminance = 0.2126*r + 0.7152*g + 0.0722*b;
+            // bg w formacie "rgb(r, g, b)" – liczymy jasność
+            const m = bg.match(/\\d+/g);
+            if (!m || m.length < 3) return;
+            const r = parseInt(m[0]), g = parseInt(m[1]), b = parseInt(m[2]);
+            const luminance = 0.2126*r + 0.7152*g + 0.0722*b;
 
-                footer.classList.remove("light","dark");
-                footer.classList.add(luminance > 128 ? "light" : "dark");
-            }}
+            footer.classList.remove("light","dark");
+            footer.classList.add(luminance > 128 ? "light" : "dark");
+        }}
 
-            setThemeClass();
-            // reaguj na zmiany (np. przełączenie motywu)
-            const obs = new MutationObserver(setThemeClass);
-            obs.observe(window.parent.document.body, {{ attributes: true, childList: true, subtree: true }});
-            window.addEventListener("resize", setThemeClass);
-        }})();
-        </script>
+        setThemeClass();
+        // reaguj na zmiany (np. przełączenie motywu)
+        const obs = new MutationObserver(setThemeClass);
+        obs.observe(window.parent.document.body, {{ attributes: true, childList: true, subtree: true }});
+        window.addEventListener("resize", setThemeClass);
+    }})();
+    </script>
     """,
     unsafe_allow_html=True
 )
