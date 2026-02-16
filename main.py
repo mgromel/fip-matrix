@@ -83,7 +83,7 @@ st.markdown(
         gap: 40px;
         z-index: 100;
         border-top: 1px solid;
-        transition: background 150ms ease, border-color 150ms ease;
+ 
     }}
     .footer img {{
         height: 45px;
@@ -92,7 +92,7 @@ st.markdown(
 
     .footer.light {{
         background: #f9f9f9;
-        border-top-color: #e0e0e0;
+        border-top-color: #878787;
     }}
     .footer.dark {{
         background: #0e1117;
