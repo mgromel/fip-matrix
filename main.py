@@ -121,10 +121,10 @@ st.markdown(
       }}
 
       #app-footer.dark {{
-        background: #0e1117 !important;
+        background: rgb(14, 17, 23) !important;
       }}
       #app-footer.dark::before {{
-        background: #30363d;
+        background: rgb(14, 17, 23);
       }}
     </style>
 
