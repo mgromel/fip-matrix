@@ -96,7 +96,7 @@ st.markdown(
     }}
     .footer.dark {{
         background: #0e1117;
-        border-top-color: #30363d;
+        border-top-color: #878787;
     }}
     </style>
 
