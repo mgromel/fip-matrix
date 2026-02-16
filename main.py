@@ -71,167 +71,158 @@ logos = [
 
 FOOTER_HEIGHT = 55  
 
-st.markdown(
-    f"""
-    <style>
-      :root {{
-        --footer-h: 70px;
-      }}
+import streamlit.components.v1 as components
 
-      /* Zrób miejsce na fixed footer */
-      section[data-testid="stMain"] .block-container {{
-        padding-bottom: calc(var(--footer-h) + 24px) !important;
-      }}
+# ... your existing code for img_to_base64 and logos ...
 
-      #app-footer {{
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        height: var(--footer-h);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 40px;
-        z-index: 10000;
-        background: #f9f9f9;
-      }}
+footer_html = f"""
+<style>
+  :root {{
+    --footer-h: 70px;
+  }}
 
-      #app-footer img {{
-        height: 45px;
-        object-fit: contain;
-      }}
+  /* Zrób miejsce na fixed footer */
+  section[data-testid="stMain"] .block-container {{
+    padding-bottom: calc(var(--footer-h) + 24px) !important;
+  }}
 
-      /* Border jako overlay (pewniejszy niż border-top) */
-      #app-footer::before {{
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 1px;
-        background: #e0e0e0;
-      }}
+  #app-footer {{
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: var(--footer-h);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+    z-index: 10000;
+    background: #f9f9f9;
+  }}
 
-      #app-footer.light {{
-        background: #f9f9f9 !important;
-      }}
-      #app-footer.light::before {{
-        background: #e0e0e0;
-      }}
+  #app-footer img {{
+    height: 45px;
+    object-fit: contain;
+  }}
 
-      #app-footer.dark {{
-        background: #0e1117 !important;
-      }}
-      #app-footer.dark::before {{
-        background: #30363d;
-      }}
-    </style>
+  #app-footer::before {{
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #e0e0e0;
+  }}
 
-    <div id="app-footer" class="light">
-      {''.join([f'<img src="data:image/png;base64,{l}" alt="logo"/>' for l in logos])}
-    </div>
+  #app-footer.light {{
+    background: #f9f9f9 !important;
+  }}
+  #app-footer.light::before {{
+    background: #e0e0e0;
+  }}
 
-    <script>
-    (function () {{
-      // Get the correct document context
-      let doc = document;
-      let targetWindow = window;
-      
-      // If we're in an iframe, target the parent
-      if (window.parent !== window) {{
-        try {{
-          doc = window.parent.document;
-          targetWindow = window.parent;
-        }} catch (e) {{
-          console.log("Cannot access parent, using current document");
+  #app-footer.dark {{
+    background: #0e1117 !important;
+  }}
+  #app-footer.dark::before {{
+    background: #30363d;
+  }}
+</style>
+
+<div id="app-footer" class="light">
+  {''.join([f'<img src="data:image/png;base64,{l}" alt="logo"/>' for l in logos])}
+</div>
+
+<script>
+console.log("Script starting...");
+
+(function () {{
+  const doc = window.parent.document;
+  
+  function initFooter() {{
+    const footer = doc.getElementById("app-footer");
+    if (!footer) {{
+      console.log("Footer not found, retrying...");
+      return false;
+    }}
+
+    console.log("Footer found!");
+
+    function parseRGB(str) {{
+      const m = str.match(/\\d+(\\.\\d+)?/g);
+      if (!m || m.length < 3) return null;
+      return [Number(m[0]), Number(m[1]), Number(m[2])];
+    }}
+
+    function luminance(rgb) {{
+      const [r, g, b] = rgb;
+      return 0.2126*r + 0.7152*g + 0.0722*b;
+    }}
+
+    function pickThemeByTextColor() {{
+      const el =
+        doc.querySelector('section[data-testid="stMain"]') ||
+        doc.querySelector('[data-testid="stAppViewContainer"]') ||
+        doc.querySelector('.stApp') ||
+        doc.body;
+
+      const colorStr = window.parent.getComputedStyle(el).color;
+      console.log("Text color:", colorStr);
+      const rgb = parseRGB(colorStr) || [0,0,0];
+      const lum = luminance(rgb);
+      console.log("Luminance:", lum);
+
+      return lum > 128 ? "dark" : "light";
+    }}
+
+    function pickTheme() {{
+      try {{
+        if (window.parent.matchMedia && window.parent.matchMedia('(prefers-color-scheme: dark)').matches) {{
+          console.log("System prefers dark");
+          return "dark";
         }}
+      }} catch (e) {{}}
+
+      return pickThemeByTextColor();
+    }}
+
+    function applyTheme() {{
+      const theme = pickTheme();
+      console.log("Applying theme:", theme);
+      footer.classList.remove("light","dark");
+      footer.classList.add(theme);
+    }}
+
+    applyTheme();
+
+    const obs = new MutationObserver(applyTheme);
+    obs.observe(doc.documentElement, {{ attributes: true, childList: true, subtree: true }});
+    obs.observe(doc.body, {{ attributes: true, childList: true, subtree: true }});
+
+    try {{
+      const mq = window.parent.matchMedia('(prefers-color-scheme: dark)');
+      if (mq && mq.addEventListener) mq.addEventListener('change', applyTheme);
+      else if (mq && mq.addListener) mq.addListener(applyTheme);
+    }} catch (e) {{}}
+
+    window.parent.addEventListener("resize", applyTheme);
+    
+    return true;
+  }}
+
+  let retries = 0;
+  const maxRetries = 20;
+  const retryInterval = setInterval(() => {{
+    if (initFooter() || retries++ > maxRetries) {{
+      clearInterval(retryInterval);
+      if (retries > maxRetries) {{
+        console.log("Footer initialization failed after max retries");
       }}
+    }}
+  }}, 100);
+}})();
+</script>
+"""
 
-      function initFooter() {{
-        const footer = doc.getElementById("app-footer");
-        if (!footer) {{
-          console.log("Footer not found, retrying...");
-          return false;
-        }}
-
-        console.log("Footer found!");
-
-        function parseRGB(str) {{
-          const m = str.match(/\\d+(\\.\\d+)?/g);
-          if (!m || m.length < 3) return null;
-          return [Number(m[0]), Number(m[1]), Number(m[2])];
-        }}
-
-        function luminance(rgb) {{
-          const [r, g, b] = rgb;
-          return 0.2126*r + 0.7152*g + 0.0722*b;
-        }}
-
-        function pickThemeByTextColor() {{
-          const el =
-            doc.querySelector('section[data-testid="stMain"]') ||
-            doc.querySelector('[data-testid="stAppViewContainer"]') ||
-            doc.querySelector('.stApp') ||
-            doc.body;
-
-          const colorStr = targetWindow.getComputedStyle(el).color;
-          console.log("Text color:", colorStr);
-          const rgb = parseRGB(colorStr) || [0,0,0];
-          const lum = luminance(rgb);
-          console.log("Luminance:", lum);
-
-          return lum > 128 ? "dark" : "light";
-        }}
-
-        function pickTheme() {{
-          try {{
-            if (targetWindow.matchMedia && targetWindow.matchMedia('(prefers-color-scheme: dark)').matches) {{
-              console.log("System prefers dark");
-              return "dark";
-            }}
-          }} catch (e) {{}}
-
-          return pickThemeByTextColor();
-        }}
-
-        function applyTheme() {{
-          const theme = pickTheme();
-          console.log("Applying theme:", theme);
-          footer.classList.remove("light","dark");
-          footer.classList.add(theme);
-        }}
-
-        applyTheme();
-
-        const obs = new MutationObserver(applyTheme);
-        obs.observe(doc.documentElement, {{ attributes: true, childList: true, subtree: true }});
-        obs.observe(doc.body, {{ attributes: true, childList: true, subtree: true }});
-
-        try {{
-          const mq = targetWindow.matchMedia('(prefers-color-scheme: dark)');
-          if (mq && mq.addEventListener) mq.addEventListener('change', applyTheme);
-          else if (mq && mq.addListener) mq.addListener(applyTheme);
-        }} catch (e) {{}}
-
-        targetWindow.addEventListener("resize", applyTheme);
-        
-        return true;
-      }}
-
-      // Retry initialization if footer not found
-      let retries = 0;
-      const maxRetries = 20;
-      const retryInterval = setInterval(() => {{
-        if (initFooter() || retries++ > maxRetries) {{
-          clearInterval(retryInterval);
-          if (retries > maxRetries) {{
-            console.log("Footer initialization failed after max retries");
-          }}
-        }}
-      }}, 100);
-    }})();
-    </script>
-    """,
-    unsafe_allow_html=True
-)
+components.html(footer_html, height=0)
