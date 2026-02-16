@@ -73,25 +73,14 @@ FOOTER_HEIGHT = 55
 
 import streamlit.components.v1 as components
 
-# ... your existing code for img_to_base64 and logos ...
-
 footer_html = f"""
 <style>
-  :root {{
-    --footer-h: 70px;
-  }}
-
-  /* Zrób miejsce na fixed footer */
-  section[data-testid="stMain"] .block-container {{
-    padding-bottom: calc(var(--footer-h) + 24px) !important;
-  }}
-
   #app-footer {{
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
-    height: var(--footer-h);
+    height: 70px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -138,10 +127,11 @@ footer_html = f"""
 console.log("Script starting...");
 
 (function () {{
-  const doc = window.parent.document;
+  const parentDoc = window.parent.document;
   
   function initFooter() {{
-    const footer = doc.getElementById("app-footer");
+    // Footer is in parent document, not iframe
+    const footer = parentDoc.getElementById("app-footer");
     if (!footer) {{
       console.log("Footer not found, retrying...");
       return false;
@@ -162,10 +152,10 @@ console.log("Script starting...");
 
     function pickThemeByTextColor() {{
       const el =
-        doc.querySelector('section[data-testid="stMain"]') ||
-        doc.querySelector('[data-testid="stAppViewContainer"]') ||
-        doc.querySelector('.stApp') ||
-        doc.body;
+        parentDoc.querySelector('section[data-testid="stMain"]') ||
+        parentDoc.querySelector('[data-testid="stAppViewContainer"]') ||
+        parentDoc.querySelector('.stApp') ||
+        parentDoc.body;
 
       const colorStr = window.parent.getComputedStyle(el).color;
       console.log("Text color:", colorStr);
@@ -180,7 +170,6 @@ console.log("Script starting...");
       try {{
         if (window.parent.matchMedia && window.parent.matchMedia('(prefers-color-scheme: dark)').matches) {{
           console.log("System prefers dark");
-          return "dark";
         }}
       }} catch (e) {{}}
 
@@ -196,9 +185,11 @@ console.log("Script starting...");
 
     applyTheme();
 
-    const obs = new MutationObserver(applyTheme);
-    obs.observe(doc.documentElement, {{ attributes: true, childList: true, subtree: true }});
-    obs.observe(doc.body, {{ attributes: true, childList: true, subtree: true }});
+    const obs = new MutationObserver(() => {{
+      console.log("DOM mutation detected, reapplying theme");
+      applyTheme();
+    }});
+    obs.observe(parentDoc.documentElement, {{ attributes: true, childList: true, subtree: true }});
 
     try {{
       const mq = window.parent.matchMedia('(prefers-color-scheme: dark)');
@@ -212,7 +203,7 @@ console.log("Script starting...");
   }}
 
   let retries = 0;
-  const maxRetries = 20;
+  const maxRetries = 50;
   const retryInterval = setInterval(() => {{
     if (initFooter() || retries++ > maxRetries) {{
       clearInterval(retryInterval);
@@ -226,3 +217,14 @@ console.log("Script starting...");
 """
 
 components.html(footer_html, height=0)
+
+st.markdown(
+    """
+    <style>
+      section[data-testid="stMain"] .block-container {
+        padding-bottom: 94px !important;
+      }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
