@@ -92,11 +92,11 @@ st.markdown(
 
     .footer.light {{
         background: #f9f9f9;
-        border-top-color: #d6d4d4;
+        border-top-color: #e0e0e0;
     }}
     .footer.dark {{
         background: #0e1117;
-        border-top-color: #d6d4d4;
+        border-top-color: #878787;
     }}
     </style>
 
