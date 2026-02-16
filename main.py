@@ -90,26 +90,42 @@ st.markdown(
         height: 45px;
     }}
 
-    /* LIGHT */
-    @media (prefers-color-scheme: Light) {{
-      .footer {{
-        background: rgb(255, 255, 255);
-        border-top: 1px solid #cccccc;
-      }}
+    .footer.light {{
+        background: #f9f9f9;
+        border-top-color: #e0e0e0;
     }}
-
-    /* DARK */
-    @media (prefers-color-scheme: Dark) {{
-      .footer {{
-        background-color: rgb(14, 17, 23);
-        border-top: 1px solid #212121;
-      }}
+    .footer.dark {{
+        background: #0e1117;
+        border-top-color: #30363d;
     }}
     </style>
 
-    <div class="footer">
-        {''.join([f'<img src="data:image/png;base64,{logo}"/>' for logo in logos])}
-    </div>
+    <script>
+        (function() {{
+            const footer = window.parent.document.getElementById("app-footer");
+            if (!footer) return;
+
+            function setThemeClass() {{
+                const body = window.parent.document.body;
+                const bg = window.parent.getComputedStyle(body).backgroundColor;
+
+                // bg w formacie "rgb(r, g, b)" – liczymy jasność
+                const m = bg.match(/\\d+/g);
+                if (!m || m.length < 3) return;
+                const r = parseInt(m[0]), g = parseInt(m[1]), b = parseInt(m[2]);
+                const luminance = 0.2126*r + 0.7152*g + 0.0722*b;
+
+                footer.classList.remove("light","dark");
+                footer.classList.add(luminance > 128 ? "light" : "dark");
+            }}
+
+            setThemeClass();
+            // reaguj na zmiany (np. przełączenie motywu)
+            const obs = new MutationObserver(setThemeClass);
+            obs.observe(window.parent.document.body, {{ attributes: true, childList: true, subtree: true }});
+            window.addEventListener("resize", setThemeClass);
+        }})();
+        </script>
     """,
     unsafe_allow_html=True
 )
