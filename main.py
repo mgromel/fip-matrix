@@ -72,6 +72,34 @@ logos = [
 st.markdown(
     f"""
     <style>
+      /* Hide Streamlit footer */
+      footer {{
+        visibility: hidden;
+      }}
+      
+      /* Hide "Made with Streamlit" */
+      footer:after {{
+        content:''; 
+        visibility: visible;
+        display: block;
+      }}
+      
+      /* Hide hamburger menu */
+      #MainMenu {{
+        visibility: hidden;
+      }}
+      
+      /* Hide "Deploy" button and header */
+      header {{
+        visibility: hidden;
+      }}
+      
+      /* Alternative: just hide the toolbar */
+      .stAppToolbar {{
+        display: none;
+      }}
+      
+      /* footer styles */
       section[data-testid="stMain"] .block-container {{
         padding-bottom: 94px !important;
       }}
@@ -98,7 +126,6 @@ st.markdown(
         object-fit: contain;
       }}
       
-      /* Ensure main content stays below footer */
       section[data-testid="stMain"] {{
         position: relative;
         z-index: 1;
