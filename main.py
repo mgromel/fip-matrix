@@ -94,7 +94,7 @@ st.markdown(
         align-items: center;
         gap: 40px;
         z-index: 10000;
-        background: #ffffff !important; /* nadpisywane klasą */
+        background: #f9f9f9; !important; /* nadpisywane klasą */
       }}
 
       #app-footer img {{
