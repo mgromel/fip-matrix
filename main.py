@@ -121,10 +121,10 @@ st.markdown(
       }}
 
       #app-footer.dark {{
-        background: rgb(14, 17, 23) !important;
+        background: #0e1117 !important;
       }}
       #app-footer.dark::before {{
-        background: rgb(14, 17, 23);
+        background: #30363d;
       }}
     </style>
 
@@ -135,69 +135,86 @@ st.markdown(
     <script>
     (function () {{
       const doc = window.parent.document;
-      const footer = doc.getElementById("app-footer");
-      if (!footer) return;
+      
+      function initFooter() {{
+        const footer = doc.getElementById("app-footer");
+        if (!footer) {{
+          console.log("Footer not found, retrying...");
+          return false;
+        }}
 
-      function parseRGB(str) {{
-        const m = str.match(/\\d+(\\.\\d+)?/g);
-        if (!m || m.length < 3) return null;
-        return [Number(m[0]), Number(m[1]), Number(m[2])];
-      }}
+        console.log("Footer found!");
 
-      function luminance(rgb) {{
-        const [r, g, b] = rgb;
-        return 0.2126*r + 0.7152*g + 0.0722*b;
-      }}
+        function parseRGB(str) {{
+          const m = str.match(/\\d+(\\.\\d+)?/g);
+          if (!m || m.length < 3) return null;
+          return [Number(m[0]), Number(m[1]), Number(m[2])];
+        }}
 
-      function pickThemeByTextColor() {{
-        // Najczęściej tekst w dark mode jest jasny -> wysoka luminancja
-        const el =
-          doc.querySelector('section[data-testid="stMain"]') ||
-          doc.querySelector('[data-testid="stAppViewContainer"]') ||
-          doc.querySelector('.stApp') ||
-          doc.body;
+        function luminance(rgb) {{
+          const [r, g, b] = rgb;
+          return 0.2126*r + 0.7152*g + 0.0722*b;
+        }}
 
-        const colorStr = window.getComputedStyle(el).color;
-        const rgb = parseRGB(colorStr) || [0,0,0];
-        const lum = luminance(rgb);
+        function pickThemeByTextColor() {{
+          const el =
+            doc.querySelector('section[data-testid="stMain"]') ||
+            doc.querySelector('[data-testid="stAppViewContainer"]') ||
+            doc.querySelector('.stApp') ||
+            doc.body;
 
-        // jasny tekst => dark theme
-        return lum > 128 ? "dark" : "light";
-      }}
+          const colorStr = window.getComputedStyle(el).color;
+          console.log("Text color:", colorStr);
+          const rgb = parseRGB(colorStr) || [0,0,0];
+          const lum = luminance(rgb);
+          console.log("Luminance:", lum);
 
-      function pickTheme() {{
-        // 1) Fallback po preferencjach systemu (często zgodne z Streamlit)
+          return lum > 128 ? "dark" : "light";
+        }}
+
+        function pickTheme() {{
+          try {{
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {{
+              console.log("System prefers dark");
+              return "dark";
+            }}
+          }} catch (e) {{}}
+
+          return pickThemeByTextColor();
+        }}
+
+        function applyTheme() {{
+          const theme = pickTheme();
+          console.log("Applying theme:", theme);
+          footer.classList.remove("light","dark");
+          footer.classList.add(theme);
+        }}
+
+        applyTheme();
+
+        const obs = new MutationObserver(applyTheme);
+        obs.observe(doc.documentElement, {{ attributes: true, childList: true, subtree: true }});
+        obs.observe(doc.body, {{ attributes: true, childList: true, subtree: true }});
+
         try {{
-          if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {{
-            return "dark";
-          }}
+          const mq = window.matchMedia('(prefers-color-scheme: dark)');
+          if (mq && mq.addEventListener) mq.addEventListener('change', applyTheme);
+          else if (mq && mq.addListener) mq.addListener(applyTheme);
         }} catch (e) {{}}
 
-        // 2) Pewniejsze: po kolorze tekstu w głównym kontenerze
-        return pickThemeByTextColor();
+        window.addEventListener("resize", applyTheme);
+        
+        return true;
       }}
 
-      function applyTheme() {{
-        const theme = pickTheme();
-        footer.classList.remove("light","dark");
-        footer.classList.add(theme);
-      }}
-
-      applyTheme();
-
-      // Reaguj na przełączenia motywu / rerender Streamlit
-      const obs = new MutationObserver(applyTheme);
-      obs.observe(doc.documentElement, {{ attributes: true, childList: true, subtree: true }});
-      obs.observe(doc.body, {{ attributes: true, childList: true, subtree: true }});
-
-      // Reaguj na zmianę preferencji systemowej
-      try {{
-        const mq = window.matchMedia('(prefers-color-scheme: dark)');
-        if (mq && mq.addEventListener) mq.addEventListener('change', applyTheme);
-        else if (mq && mq.addListener) mq.addListener(applyTheme);
-      }} catch (e) {{}}
-
-      window.addEventListener("resize", applyTheme);
+      // Retry initialization if footer not found
+      let retries = 0;
+      const maxRetries = 20;
+      const retryInterval = setInterval(() => {{
+        if (initFooter() || retries++ > maxRetries) {{
+          clearInterval(retryInterval);
+        }}
+      }}, 100);
     }})();
     </script>
     """,
