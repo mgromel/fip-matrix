@@ -91,7 +91,7 @@ st.markdown(
     }}
 
     /* LIGHT */
-    @media (prefers-color-scheme: light) {{
+    @media (prefers-color-scheme: Light) {{
       .footer {{
         background: rgb(255, 255, 255);
         border-top: 1px solid #cccccc;
@@ -99,7 +99,7 @@ st.markdown(
     }}
 
     /* DARK */
-    @media (prefers-color-scheme: dark) {{
+    @media (prefers-color-scheme: Dark) {{
       .footer {{
         background-color: rgb(14, 17, 23);
         border-top: 1px solid #212121;
