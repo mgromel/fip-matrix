@@ -86,14 +86,22 @@ st.markdown(
         justify-content: center;
         align-items: center;
         gap: 40px;
-        z-index: 10000;
+        z-index: 999999;
         background-color: var(--background-color);
         border-top: 1px solid var(--text-color-light, rgba(128, 128, 128, 0.2));
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
       }}
 
       #app-footer img {{
         height: 45px;
         object-fit: contain;
+      }}
+      
+      /* Ensure main content stays below footer */
+      section[data-testid="stMain"] {{
+        position: relative;
+        z-index: 1;
       }}
     </style>
 
