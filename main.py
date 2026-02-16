@@ -69,66 +69,101 @@ logos = [
     # img_to_base64(assets / "xxx.png"),
 ]
 
+FOOTER_HEIGHT = 45  
+
 st.markdown(
     f"""
     <style>
-    .footer {{
+      :root {{
+        --footer-h: {FOOTER_HEIGHT}px;
+      }}
+
+      /* Zrób miejsce na fixed footer (najważniejsze!) */
+      section[data-testid="stMain"] .block-container {{
+        padding-bottom: calc(var(--footer-h) + 24px) !important;
+      }}
+
+      #app-footer {{
         position: fixed;
-        left: 0; bottom: 0;
-        width: 100%;
-        padding: 10px 0;
+        left: 0; right: 0; bottom: 0;
+        height: var(--footer-h);
         display: flex;
         justify-content: center;
         align-items: center;
         gap: 40px;
-        z-index: 100;
-        border-top: 1px solid;
- 
-    }}
-    .footer img {{
+        z-index: 10000;
+        background: rgba(0,0,0,0); /* zostanie nadpisane klasą light/dark */
+        pointer-events: none; /* żeby footer nie blokował scroll/klików pod spodem */
+      }}
+
+      #app-footer img {{
         height: 45px;
         object-fit: contain;
-    }}
+        pointer-events: auto; /* jakbyś chciał linkować loga */
+      }}
 
-    .footer.light {{
-        background: #f9f9f9;
-        border-top-color: #e0e0e0;
-    }}
-    .footer.dark {{
-        background: #0e1117;
-        border-top-color: #878787;
-    }}
+      /* Border jako overlay – pewniejsze niż border-top */
+      #app-footer::before {{
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 1px;
+        background: transparent;
+      }}
+
+      #app-footer.light {{
+        background: #f9f9f9 !important;
+      }}
+      #app-footer.light::before {{
+        background: #e0e0e0 !important;
+      }}
+
+      #app-footer.dark {{
+        background: #0e1117 !important;
+      }}
+      #app-footer.dark::before {{
+        background: #30363d !important;
+      }}
     </style>
 
-    <div class="footer" id="app-footer">
-        {''.join([f'<img src="data:image/png;base64,{l}"/>' for l in logos])}
+    <div id="app-footer" class="light">
+      {''.join([f'<img src="data:image/png;base64,{l}" alt="logo"/>' for l in logos])}
     </div>
 
     <script>
-    (function() {{
-        const footer = window.parent.document.getElementById("app-footer");
+      (function() {{
+        const doc = window.parent.document;
+        const footer = doc.getElementById("app-footer");
         if (!footer) return;
 
+        function getLuminance(rgbStr) {{
+          const m = rgbStr.match(/\\d+/g);
+          if (!m || m.length < 3) return 255;
+          const r = parseInt(m[0]), g = parseInt(m[1]), b = parseInt(m[2]);
+          return 0.2126*r + 0.7152*g + 0.0722*b;
+        }}
+
         function setThemeClass() {{
-            const body = window.parent.document.body;
-            const bg = window.parent.getComputedStyle(body).backgroundColor;
+          // Streamlit czasem ustawia tło na wrapperach, nie na body
+          const main = doc.querySelector('section[data-testid="stMain"]');
+          const target = main || doc.body;
 
-            // bg w formacie "rgb(r, g, b)" – liczymy jasność
-            const m = bg.match(/\\d+/g);
-            if (!m || m.length < 3) return;
-            const r = parseInt(m[0]), g = parseInt(m[1]), b = parseInt(m[2]);
-            const luminance = 0.2126*r + 0.7152*g + 0.0722*b;
+          const bg = window.getComputedStyle(target).backgroundColor;
+          const lum = getLuminance(bg);
 
-            footer.classList.remove("light","dark");
-            footer.classList.add(luminance > 128 ? "light" : "dark");
+          footer.classList.remove("light","dark");
+          footer.classList.add(lum > 128 ? "light" : "dark");
         }}
 
         setThemeClass();
-        // reaguj na zmiany (np. przełączenie motywu)
-        const obs = new MutationObserver(setThemeClass);
-        obs.observe(window.parent.document.body, {{ attributes: true, childList: true, subtree: true }});
+
+        // Obserwuj zmiany atrybutów i stylów (przełączenia motywu, rerender)
+        const obs = new MutationObserver(() => setThemeClass());
+        obs.observe(doc.documentElement, {{ attributes: true, childList: true, subtree: true }});
+        obs.observe(doc.body, {{ attributes: true, childList: true, subtree: true }});
+
         window.addEventListener("resize", setThemeClass);
-    }})();
+      }})();
     </script>
     """,
     unsafe_allow_html=True
