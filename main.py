@@ -94,7 +94,7 @@ st.markdown(
     @media (prefers-color-scheme: light) {{
       .footer {{
         background: rgb(255, 255, 255);
-        border-top: 1px solid #212121;
+        border-top: 1px solid #cccccc;
       }}
     }}
 
