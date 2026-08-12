@@ -64,7 +64,7 @@ STATUS_LABELS = {
     3: "Available resource / current use",
 }
 
-STATUS_COLORS = {0: None, 1: "#47afff", 2: "#d8b083", 3: "#86eaaf"}
+STATUS_COLORS = {0: None, 1: "#f0a182", 2: "#8cda58", 3: "#7a5cf0"}
 
 # Compact mode has no colour, so order is carried by fill instead. This is also
 # the secondary encoding that keeps status from depending on hue alone.
