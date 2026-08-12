@@ -1,140 +1,193 @@
+"""FIP Matrix — interactive FAIR convergence explorer.
+
+Entry point for Streamlit Community Cloud; must stay at the repository root.
+Run locally with ``streamlit run main.py``.
+"""
+
 import streamlit as st
-import pandas as pd
-from config import COLOR_MAP
-from utils import load_and_prepare_data, filter_data
-import base64
-from pathlib import Path
 
-st.set_page_config(layout="wide", page_title='FIP Matrix', page_icon='🔍')
-st.title('Interactive FIP Matrix')
+import charts
+import ui
+import utils
+from config import CSV_PATH
+from matrix import render_matrix
 
-# --- Load data
-df = load_and_prepare_data('./data/new_matrix.csv')
-
-# --- Inputs
-princ = sorted(df['q'].dropna().unique())
-comm = sorted(df['c'].dropna().unique())
-
-col1, col2 = st.columns(2)
-with col1:
-    min_date, max_date = df['startdate'].min(), df['enddate'].max()
-    star = st.date_input('Start date', value=min_date, min_value=min_date, max_value=max_date)
-    fip_questions = st.multiselect('FIP questions:', options=princ, default=princ[:5])
-with col2:
-    end = st.date_input('End date', value=max_date, min_value=min_date, max_value=max_date)
-    communities = st.multiselect('Communities:', options=comm)
-
-filtered_df = filter_data(df, star, end, fip_questions, communities)
-filtered_df = filtered_df.rename(columns={'q': 'FIP questions', 'reslabel': 'FAIR Supporting Resource', 'res_np': 'Link'})
-
-pivot_raw = pd.pivot_table(
-    filtered_df,
-    values='mapped_values',
-    index=['FIP questions', 'FAIR Supporting Resource', 'Link'],
-    columns='c',
-    aggfunc='min',
-    fill_value=0
+st.set_page_config(
+    layout="wide",
+    page_title="FIP Matrix",
+    page_icon="🔍",
+    initial_sidebar_state="expanded",
 )
 
-def style_fip_matrix(val):
-    return f"background-color: {COLOR_MAP.get(val, 'white')}; color: transparent;"
+df = utils.get_data()
+mtime = CSV_PATH.stat().st_mtime
 
-st.dataframe(
-    pivot_raw.style.map(style_fip_matrix),
-    use_container_width=True,
-    column_config={
-        "Link": st.column_config.LinkColumn(help='Links to nanopublications of each FER', display_text='🔗')
-    }
+questions_all = list(df["q"].cat.categories)  # canonical FAIR order, not alphabetical
+communities_all = sorted(df["c"].dropna().unique())
+supercommunities_all = sorted(df["sc"].dropna().unique())
+min_date, max_date = df["startdate"].min(), df["enddate"].max()
+
+# --- Filters ----------------------------------------------------------------
+# One form, one rerun. Previously each of the four widgets triggered its own full
+# script run and re-sent the entire matrix payload.
+
+with st.sidebar:
+    ui.sidebar_header()
+    st.subheader("Filters")
+    with st.form("filters", border=False):
+        start = st.date_input(
+            "Start date", value=min_date, min_value=min_date, max_value=max_date
+        )
+        end = st.date_input(
+            "End date", value=max_date, min_value=min_date, max_value=max_date
+        )
+        selected_questions = st.multiselect(
+            "FIP questions", options=questions_all, default=questions_all[:5]
+        )
+        selected_supercommunities = st.multiselect(
+            "Supercommunities",
+            options=supercommunities_all,
+            placeholder="All supercommunities",
+        )
+        selected_communities = st.multiselect(
+            "Communities", options=communities_all, placeholder="All communities"
+        )
+        st.form_submit_button("Apply", type="primary", width="stretch")
+
+    st.caption("Leave a field empty to include everything in that dimension.")
+    ui.sidebar_logos()
+
+fdf = utils.filter_data(
+    df,
+    start,
+    end,
+    selected_questions,
+    selected_communities,
+    selected_supercommunities,
 )
 
-# --- Legend
-legend = pd.DataFrame([0, 1, 2, 3], index=[
-    'No data','Resource in development/future use','Available resource/future use','Available resource/current use'
-], columns=['LEGEND'])
-legend.index.name='FAIR Supporting Resource status'
+# --- Page -------------------------------------------------------------------
 
-st.dataframe(legend.style.map(style_fip_matrix), use_container_width=False)
+ui.tab_styles()
 
-
-# --- Footer
-def img_to_base64(img_path):
-    with open(img_path, "rb") as f:
-        return base64.b64encode(f.read()).decode()
-
-assets = Path(__file__).parent / "assets"
-
-logos = [
-    img_to_base64(assets / "parc_logo.png"),
-    img_to_base64(assets / "GFF_logo.png"),
-    # img_to_base64(assets / "xxx.png"),
-]
-
-st.markdown(
-    f"""
-    <style>
-      /* Hide Streamlit footer */
-      footer {{
-        visibility: hidden;
-      }}
-      
-      /* Hide "Made with Streamlit" */
-      footer:after {{
-        content:''; 
-        visibility: visible;
-        display: block;
-      }}
-      
-      /* Hide hamburger menu */
-      #MainMenu {{
-        visibility: hidden;
-      }}
-      
-      /* Hide "Deploy" button and header */
-      header {{
-        visibility: hidden;
-      }}
-      
-      /* Alternative: just hide the toolbar */
-      .stAppToolbar {{
-        display: none;
-      }}
-      
-      /* footer styles */
-      section[data-testid="stMain"] .block-container {{
-        padding-bottom: 94px !important;
-      }}
-
-      #app-footer {{
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        height: 70px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 40px;
-        z-index: 999999;
-        background-color: var(--background-color);
-        border-top: 1px solid var(--text-color-light, rgba(128, 128, 128, 0.2));
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-      }}
-
-      #app-footer img {{
-        height: 45px;
-        object-fit: contain;
-      }}
-      
-      section[data-testid="stMain"] {{
-        position: relative;
-        z-index: 1;
-      }}
-    </style>
-
-    <div id="app-footer">
-      {''.join([f'<img src="data:image/png;base64,{l}" alt="logo"/>' for l in logos])}
-    </div>
-    """,
-    unsafe_allow_html=True
+tab_overview, tab_matrix, tab_analytics = st.tabs(
+    ["Overview", "Matrix", "Analytics"],
+    # Lazy execution: only the open tab's body runs, so the matrix payload is not
+    # built while the user is reading the charts, and vice versa.
+    on_change="rerun",
+    key="active_tab",
 )
+
+with tab_overview:
+    if tab_overview.open:
+        stats = utils.global_stats(df, mtime)
+        ui.stat_band(stats)
+
+        st.subheader("Declarations by type")
+        st.plotly_chart(
+            charts.declaration_mix(utils.declaration_mix(df, mtime)),
+            config={"displayModeBar": False},
+        )
+
+        left, right = st.columns(2)
+        with left:
+            st.subheader("Coverage by FAIR family")
+            st.caption("Declarations across all communities, by principle family.")
+            st.plotly_chart(
+                charts.coverage_by_family(utils.coverage_by_family(df, mtime)),
+                config={"displayModeBar": False},
+            )
+        with right:
+            st.subheader("Most adopted resources")
+            st.caption("Measured in distinct communities declaring the resource.")
+            st.plotly_chart(
+                charts.top_resources(utils.top_resources(df, mtime, 5), height=180),
+                config={"displayModeBar": False},
+            )
+
+        with st.expander("Data quality"):
+            st.markdown(
+                f"""
+- **{stats['unmapped']:,} of {stats['declarations']:,} declarations
+  ({stats['unmapped_share']:.1%}) carry no status** and are therefore invisible in
+  the matrix. Their `resourcetype` is either the bare `FAIR-Enabling-Resource`
+  term or missing, and neither is covered by the status mapping.
+- The matrix aggregates duplicate declarations with **`min`**, so a community
+  declaring both current *and* planned use of the same resource shows the weaker
+  status. The Analytics heatmap uses `max` instead, since it summarises what a
+  community has achieved rather than auditing each resource.
+- Declarations with no `startdate`/`enddate` are backfilled with the dataset-wide
+  earliest and latest dates, so they always fall inside the selected window.
+"""
+            )
+
+with tab_matrix:
+    if tab_matrix.open:
+        ui.legend()
+        render_matrix(fdf)
+
+with tab_analytics:
+    if tab_analytics.open:
+        if fdf.empty:
+            st.info("No declarations match the current selection.")
+        else:
+            st.caption(
+                f"{len(fdf):,} declarations · {fdf['c'].nunique()} communities · "
+                f"{fdf['q'].nunique()} FIP questions · "
+                f"{fdf['reslabel'].nunique()} resources"
+            )
+
+            st.subheader(
+                "FIP question × community", help=ui.CHART_HELP["heatmap"]
+            )
+            ui.legend()
+            st.plotly_chart(
+                charts.question_community_heatmap(fdf),
+                config={"displayModeBar": False},
+            )
+
+            left, right = st.columns(2)
+            with left:
+                st.subheader(
+                    "Status by FAIR principle", help=ui.CHART_HELP["principle"]
+                )
+                st.plotly_chart(
+                    charts.status_by_principle(fdf),
+                    config={"displayModeBar": False},
+                )
+            with right:
+                st.subheader("Metadata vs data", help=ui.CHART_HELP["md_vs_d"])
+                st.plotly_chart(
+                    charts.metadata_vs_data(fdf), config={"displayModeBar": False}
+                )
+
+            st.subheader("Community coverage", help=ui.CHART_HELP["coverage"])
+            st.plotly_chart(
+                charts.community_coverage(fdf), config={"displayModeBar": False}
+            )
+
+            st.subheader("Most adopted resources", help=ui.CHART_HELP["resources"])
+            st.plotly_chart(
+                charts.top_resources(utils.top_resources_in(fdf, 15), height=460),
+                config={"displayModeBar": False},
+            )
+
+            st.subheader(
+                "Supercommunities", help=ui.CHART_HELP["supercommunities"]
+            )
+            st.plotly_chart(
+                charts.supercommunity_treemap(fdf), config={"displayModeBar": False}
+            )
+
+            st.subheader("Adoption over time", help=ui.CHART_HELP["timeline"])
+            st.plotly_chart(
+                charts.adoption_timeline(fdf), config={"displayModeBar": False}
+            )
+
+            with st.expander("Table view"):
+                st.dataframe(
+                    utils.selection_table(fdf),
+                    hide_index=True,
+                    width="stretch",
+                    height=380,
+                )

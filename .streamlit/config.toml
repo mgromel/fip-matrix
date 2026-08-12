@@ -1,0 +1,37 @@
+# App theme.
+#
+# primaryColor is deliberately violet — outside both the blue status ramp and the
+# aqua chart series — so UI chrome (buttons, tab indicator, focus rings, filter
+# chips) can never be mistaken for data. Surfaces and ink follow the same design
+# tokens the charts are validated against.
+
+[theme]
+base = "light"
+primaryColor = "#4a3aa7"
+backgroundColor = "#fcfcfb"
+secondaryBackgroundColor = "#f0efec"
+textColor = "#0b0b0b"
+linkColor = "#2a78d6"
+borderColor = "#e1e0d9"
+dataframeBorderColor = "#e1e0d9"
+dataframeHeaderBackgroundColor = "#f0efec"
+font = "sans-serif"
+baseRadius = "0.5rem"
+buttonRadius = "0.5rem"
+showWidgetBorder = true
+showSidebarBorder = true
+
+[theme.dark]
+backgroundColor = "#1a1a19"
+secondaryBackgroundColor = "#2c2c2a"
+textColor = "#ffffff"
+primaryColor = "#9085e9"
+linkColor = "#6da7ec"
+borderColor = "#2c2c2a"
+dataframeBorderColor = "#2c2c2a"
+dataframeHeaderBackgroundColor = "#2c2c2a"
+
+[client]
+# Replaces the CSS that used to hide #MainMenu / header / .stAppToolbar. Those
+# selectors target Streamlit's internal DOM and break on upgrades.
+toolbarMode = "minimal"
