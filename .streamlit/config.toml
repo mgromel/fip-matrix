@@ -1,13 +1,15 @@
 # App theme.
 #
-# primaryColor is deliberately violet — outside both the blue status ramp and the
-# aqua chart series — so UI chrome (buttons, tab indicator, focus rings, filter
-# chips) can never be mistaken for data. Surfaces and ink follow the same design
-# tokens the charts are validated against.
+# primaryColor is a pastel blue. Blue is free for chrome: the status scale is
+# tan / aqua / lime and the chart series are aqua and tan, so no button, tab
+# indicator, focus ring or filter chip can be mistaken for data. Both shades are
+# picked for label contrast on their own fill — 4.7:1 with white ink in light
+# mode, 10.6:1 with black ink in dark mode. Surfaces and ink follow the same
+# design tokens the charts are validated against.
 
 [theme]
 base = "light"
-primaryColor = "#4a3aa7"
+primaryColor = "#3f76b0"
 backgroundColor = "#fcfcfb"
 secondaryBackgroundColor = "#f0efec"
 textColor = "#0b0b0b"
@@ -25,7 +27,7 @@ showSidebarBorder = true
 backgroundColor = "#1a1a19"
 secondaryBackgroundColor = "#2c2c2a"
 textColor = "#ffffff"
-primaryColor = "#9085e9"
+primaryColor = "#8fbde8"
 linkColor = "#6da7ec"
 borderColor = "#2c2c2a"
 dataframeBorderColor = "#2c2c2a"
