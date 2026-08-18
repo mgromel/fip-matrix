@@ -42,7 +42,7 @@ The CSV is saved to `data/new_matrix.csv` and used live in the app.
 |---|---|---|---|
 | 0 | No data | *unfilled* | |
 | 1 | Resource in development / future use | `#f0a182` apricot | ○ |
-| 2 | Available resource / future use | `#6ec7c2` aqua | ◐ |
+| 2 | Available resource / future use | `#2f6699` blue | ◐ |
 | 3 | Available resource / current use | `#b0f05c` lime | ● |
 
 Cells are 44px and isolated in a 96%-empty grid, where hue separation reads far
